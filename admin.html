@@ -4,250 +4,315 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Khelo Bangladesh</title>
+    
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root { --primary: #4361ee; --bg-body: #f3f4f6; --sidebar-width: 260px; }
-        body { background-color: var(--bg-body); font-family: 'Inter', sans-serif; overflow-x: hidden; margin: 0; }
+        body { background-color: var(--bg-body); font-family: 'Inter', sans-serif; overflow-x: hidden; margin: 0; padding-bottom: 50px;}
+        
+        /* SIDEBAR */
         .sidebar { height: 100vh; width: var(--sidebar-width); position: fixed; top: 0; left: 0; background: #fff; z-index: 2000; transition: transform 0.3s; transform: translateX(0); border-right: 1px solid #e5e7eb; }
-        .sidebar.hidden-mobile { transform: translateX(-100%); }
-        .nav-menu { padding: 15px; }
-        .nav-link { padding: 12px; margin-bottom: 5px; color: #666; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .nav-link.active, .nav-link:hover { background: #eef2ff; color: var(--primary); font-weight: 600; }
-        .main-content { margin-left: var(--sidebar-width); padding: 20px; transition: 0.3s; }
         
-        .mobile-header { display: none; background: white; padding: 15px; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1500; border-bottom: 1px solid #ddd; }
+        /* MOBILE HEADER */
+        .mobile-header { display: none; background: white; padding: 15px; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1500; border-bottom: 1px solid #ddd; height: 60px; }
+        .nav-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1900; }
         
+        /* CONTENT */
+        .main-content { margin-left: var(--sidebar-width); padding: 20px; }
         .card-box { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .stat-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .sc-val { font-size: 24px; font-weight: bold; margin: 0; }
         
-        .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: white; z-index: 5000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .hidden { display: none !important; }
-
+        /* RESPONSIVE */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.active { transform: translateX(0); }
-            .main-content { margin-left: 0; }
+            .nav-overlay.active { display: block; }
+            .main-content { margin-left: 0; padding: 15px; }
             .mobile-header { display: flex; }
         }
+
+        .nav-link { padding: 12px; color: #555; display: block; cursor: pointer; text-decoration: none; font-weight: 500; }
+        .nav-link:hover, .nav-link.active { background: #eef2ff; color: var(--primary); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- LOADING SCREEN -->
-    <div id="loading" class="loading-overlay">
-        <div class="spinner-border text-primary" role="status"></div>
-        <div style="margin-top: 15px; font-weight: bold;">Connecting to Database...</div>
-        <button class="btn btn-sm btn-outline-danger mt-3" onclick="document.getElementById('loading').classList.add('hidden')">Force Close Loader</button>
-    </div>
-
     <!-- MOBILE HEADER -->
     <div class="mobile-header">
-        <h5 class="m-0 text-primary fw-bold">ADMIN PANEL</h5>
+        <h5 class="m-0 fw-bold text-primary">ADMIN PANEL</h5>
         <button class="btn btn-light border" onclick="window.toggleSidebar()"><i class="fas fa-bars"></i></button>
     </div>
 
+    <!-- OVERLAY -->
+    <div class="nav-overlay" onclick="window.toggleSidebar()"></div>
+
     <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
-        <div class="p-4 text-primary fw-bold h4">KHELO BD</div>
-        <div class="nav-menu">
-            <div class="nav-link active" onclick="window.switchView('dashboard', this)"><i class="fas fa-chart-pie"></i> Dashboard</div>
-            <div class="nav-link" onclick="window.switchView('matches', this)"><i class="fas fa-trophy"></i> Matches</div>
-            <div class="nav-link" onclick="window.switchView('categories', this)"><i class="fas fa-th-large"></i> Categories</div>
-            <div class="nav-link" onclick="window.switchView('sliders', this)"><i class="fas fa-images"></i> Sliders</div>
-            <div class="nav-link" onclick="window.switchView('users', this)"><i class="fas fa-users"></i> Users</div>
-            <div class="nav-link" onclick="window.switchView('withdraw', this)"><i class="fas fa-wallet"></i> Withdrawals</div>
-            <div class="nav-link" onclick="window.switchView('settings', this)"><i class="fas fa-cog"></i> Settings</div>
+        <div class="p-3 text-center fw-bold text-primary h4 border-bottom">KHELO BD</div>
+        <div class="p-2">
+            <div class="nav-link active" onclick="window.switchView('dashboard', this)">Dashboard</div>
+            <div class="nav-link" onclick="window.switchView('matches', this)">Matches</div>
+            <div class="nav-link" onclick="window.switchView('categories', this)">Categories</div>
+            <div class="nav-link" onclick="window.switchView('users', this)">Users</div>
+            <div class="nav-link" onclick="window.switchView('withdraw', this)">Withdrawals</div>
+            <div class="nav-link" onclick="window.switchView('settings', this)">Settings</div>
         </div>
     </div>
 
     <!-- MAIN CONTENT -->
     <div class="main-content">
+        
+        <!-- DASHBOARD -->
         <div id="view-dashboard">
-            <h4>Dashboard</h4>
-            <div class="row">
-                <div class="col-6"><div class="stat-card"><div><small>Users</small><h3 class="sc-val" id="dash-users">0</h3></div></div></div>
-                <div class="col-6"><div class="stat-card"><div><small>Deposit</small><h3 class="sc-val" id="dash-deposit">0</h3></div></div></div>
-                <div class="col-6"><div class="stat-card"><div><small>Matches</small><h3 class="sc-val" id="dash-matches">0</h3></div></div></div>
-                <div class="col-6"><div class="stat-card"><div><small>Pending</small><h3 class="sc-val" id="dash-pending">0</h3></div></div></div>
+            <h4 class="mb-3">Dashboard</h4>
+            <div class="row g-3">
+                <div class="col-6"><div class="card-box text-center"><h6>Users</h6><h2 id="dash-users">0</h2></div></div>
+                <div class="col-6"><div class="card-box text-center"><h6>Matches</h6><h2 id="dash-matches">0</h2></div></div>
+                <div class="col-6"><div class="card-box text-center"><h6>Deposit</h6><h2 id="dash-deposit">0</h2></div></div>
+                <div class="col-6"><div class="card-box text-center"><h6>Pending</h6><h2 id="dash-pending">0</h2></div></div>
             </div>
         </div>
 
+        <!-- MATCHES -->
         <div id="view-matches" class="hidden">
             <div class="d-flex justify-content-between mb-3"><h4>Matches</h4><button class="btn btn-primary" onclick="window.openMatchModal()">+ Create</button></div>
-            <div class="card-box table-responsive"><table class="table"><thead class="table-light"><tr><th>ID</th><th>Title</th><th>Status</th><th>Action</th></tr></thead><tbody id="matches-table-body"></tbody></table></div>
+            <div class="card-box table-responsive">
+                <table class="table"><thead class="table-light"><tr><th>Title</th><th>Status</th><th>Action</th></tr></thead><tbody id="matches-table-body"></tbody></table>
+            </div>
         </div>
 
+        <!-- CATEGORIES -->
         <div id="view-categories" class="hidden">
-            <div class="d-flex justify-content-between mb-3"><h4>Categories</h4><button class="btn btn-primary" onclick="window.openCategoryModal()">+ Add</button></div>
+            <div class="d-flex justify-content-between mb-3"><h4>Categories</h4><button class="btn btn-primary" onclick="window.openCatModal()">+ Add</button></div>
             <div class="row g-3" id="cat-grid"></div>
         </div>
-        
-        <!-- OTHER VIEWS HIDDEN FOR BREVITY BUT LOGIC IS CONNECTED -->
-        <div id="view-sliders" class="hidden"><h4>Sliders</h4><button class="btn btn-primary mb-3" onclick="window.openBannerModal()">+ Add Banner</button><div class="row g-3" id="banner-grid"></div></div>
-        <div id="view-users" class="hidden"><h4>Users</h4><div class="card-box table-responsive"><table class="table"><thead><tr><th>User</th><th>Dep/Win</th><th>Action</th></tr></thead><tbody id="users-table-body"></tbody></table></div></div>
-        <div id="view-withdraw" class="hidden"><h4>Withdrawals</h4><div class="card-box table-responsive"><table class="table"><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Action</th></tr></thead><tbody id="withdraw-table-body"></tbody></table></div></div>
-        <div id="view-settings" class="hidden"><h4>Settings</h4><div class="card-box"><label>Notice</label><textarea id="set-notice" class="form-control"></textarea><button class="btn btn-dark mt-2" onclick="window.saveNotice()">Save</button></div></div>
+
+        <!-- USERS -->
+        <div id="view-users" class="hidden">
+            <h4>Users</h4>
+            <div class="card-box table-responsive"><table class="table"><thead><tr><th>Name</th><th>Bal</th><th>Action</th></tr></thead><tbody id="users-table-body"></tbody></table></div>
+        </div>
+
+        <!-- WITHDRAW -->
+        <div id="view-withdraw" class="hidden">
+            <h4>Withdrawals</h4>
+            <div class="card-box table-responsive"><table class="table"><thead><tr><th>User</th><th>Amt</th><th>Method</th><th>Action</th></tr></thead><tbody id="withdraw-table-body"></tbody></table></div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="view-settings" class="hidden">
+            <h4>Settings</h4>
+            <div class="card-box">
+                <label>Notice</label><textarea id="set-notice" class="form-control mb-2"></textarea>
+                <label>bKash</label><input id="set-bkash" class="form-control mb-2">
+                <button class="btn btn-dark w-100" onclick="window.saveSettings()">Save</button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- MODALS (Simplified for reliability) -->
-    <div class="modal fade" id="matchModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Match</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
-        <input type="hidden" id="m-key">
+    <!-- MODALS -->
+    <div class="modal fade" id="matchModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Add Match</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
         <input class="form-control mb-2" id="m-title" placeholder="Title">
         <input class="form-control mb-2" type="number" id="m-entry" placeholder="Entry Fee">
         <input class="form-control mb-2" type="number" id="m-prize" placeholder="Total Prize">
-        <select class="form-select mb-2" id="m-category"></select>
-        <select class="form-select mb-2" id="m-status"><option value="Upcoming">Upcoming</option><option value="Ongoing">Ongoing</option><option value="Finished">Finished</option></select>
-        <button class="btn btn-primary w-100" onclick="window.saveMatch()">Save</button>
+        <select class="form-control mb-2" id="m-category"></select>
+        <select class="form-control mb-2" id="m-status"><option value="Upcoming">Upcoming</option><option value="Ongoing">Ongoing</option><option value="Finished">Finished</option></select>
+        <button class="btn btn-primary w-100" onclick="window.saveMatch()">Save Match</button>
     </div></div></div></div>
 
-    <div class="modal fade" id="catModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Category</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <div class="modal fade" id="catModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Add Category</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
         <input class="form-control mb-2" id="cat-name" placeholder="Name">
-        <input class="form-control mb-2" id="cat-url" placeholder="Image URL">
+        <input class="form-control mb-2" id="cat-img" placeholder="Image URL">
         <button class="btn btn-primary w-100" onclick="window.saveCategory()">Save</button>
+    </div></div></div></div>
+
+    <div class="modal fade" id="balanceModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Edit Balance</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+        <input type="hidden" id="bal-uid">
+        <select class="form-control mb-2" id="bal-action"><option value="add_dep">Add Deposit</option><option value="add_win">Add Winnings</option></select>
+        <input class="form-control mb-2" type="number" id="bal-amount" placeholder="Amount">
+        <button class="btn btn-success w-100" onclick="window.updateBalance()">Update</button>
     </div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // --- HARDCODED KEYS ---
+        // --- CONFIG ---
         const SUPABASE_URL = 'https://gjeykhdxzdfzqgvskwhv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqZXlraGR4emRmenFndnNrd2h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTYxMjYsImV4cCI6MjA4NzM5MjEyNn0.kKuv51e71dMxB21w7LmyXj5EmZbSHFKFQ__HbfAv5qQ';
-        
-        let supabase;
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch (e) {
-            alert("Critical Error: Could not initialize Supabase. " + e.message);
-        }
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let modals = {};
 
-        // --- UI FUNCTIONS ---
+        // --- GLOBAL FUNCTIONS ---
         window.toggleSidebar = function() {
             document.getElementById('sidebar').classList.toggle('active');
-        }
+            document.querySelector('.nav-overlay').classList.toggle('active');
+        };
 
         window.switchView = function(view, elem) {
             document.querySelectorAll('.main-content > div').forEach(d => d.classList.add('hidden'));
             document.getElementById('view-'+view).classList.remove('hidden');
             document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
             if(elem) elem.classList.add('active');
-            window.toggleSidebar(); // Close sidebar on mobile on click
+            window.toggleSidebar(); // Close sidebar on mobile
+
+            if(view === 'dashboard') window.loadDash();
+            if(view === 'matches') window.loadMatches();
+            if(view === 'categories') window.loadCats();
+            if(view === 'users') window.loadUsers();
+            if(view === 'withdraw') window.loadWithdraw();
+            if(view === 'settings') window.loadSettings();
+        };
+
+        // --- DATA LOADERS ---
+        window.loadDash = async function() {
+            const { data: users } = await supabase.from('users').select('*');
+            const { count: matches } = await supabase.from('matches').select('*', { count: 'exact', head: true });
             
-            if(view === 'matches') window.fetchMatches();
-            if(view === 'categories') window.fetchCategories();
-            if(view === 'users') window.fetchUsers();
-            if(view === 'withdraw') window.fetchWithdrawals();
-        }
+            document.getElementById('dash-users').innerText = users ? users.length : 0;
+            document.getElementById('dash-matches').innerText = matches || 0;
+            
+            let totalDep = 0;
+            if(users) users.forEach(u => totalDep += (u.deposit || 0));
+            document.getElementById('dash-deposit').innerText = totalDep;
+        };
 
-        // --- DATA FUNCTIONS ---
-        window.fetchDashboardData = async function() {
-            try {
-                // TEST CONNECTION
-                const { data: users, error } = await supabase.from('users').select('*');
-                if (error) throw error;
-
-                document.getElementById('dash-users').innerText = users.length;
-                
-                // If we got here, connection is GOOD. Hide loader.
-                document.getElementById('loading').classList.add('hidden');
-
-            } catch (err) {
-                document.getElementById('loading').classList.add('hidden');
-                alert("Database Error: " + err.message + "\n\nDid you run the SQL to disable RLS?");
-            }
-        }
-
-        window.fetchMatches = async function() {
+        window.loadMatches = async function() {
             const { data } = await supabase.from('matches').select('*');
             const tb = document.getElementById('matches-table-body'); tb.innerHTML = "";
-            const sel = document.getElementById('m-category'); sel.innerHTML = "";
-            
             if(data) {
                 data.forEach(m => {
-                    tb.innerHTML += `<tr><td>${m.match_id_number || 'ID'}</td><td>${m.title}</td><td>${m.status}</td><td><button class="btn btn-sm btn-danger" onclick="window.deleteMatch('${m.id}')">Del</button></td></tr>`;
+                    tb.innerHTML += `<tr><td>${m.title}</td><td>${m.status}</td><td><button class="btn btn-sm btn-danger" onclick="window.delMatch('${m.id}')">Del</button></td></tr>`;
                 });
             }
-
-            // Load Categories for dropdown
+            // Load Cats for Select
             const { data: cats } = await supabase.from('categories').select('*');
+            const sel = document.getElementById('m-category'); sel.innerHTML = "";
             if(cats) cats.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-        }
+        };
+
+        window.loadCats = async function() {
+            const { data } = await supabase.from('categories').select('*');
+            const grid = document.getElementById('cat-grid'); grid.innerHTML = "";
+            if(data) {
+                data.forEach(c => {
+                    grid.innerHTML += `<div class="col-6"><div class="card-box text-center"><img src="${c.img}" style="height:60px; object-fit:contain"><br><b>${c.name}</b><br><button class="btn btn-sm btn-danger mt-2" onclick="window.delCat('${c.id}')">Del</button></div></div>`;
+                });
+            }
+        };
+
+        window.loadUsers = async function() {
+            const { data } = await supabase.from('users').select('*');
+            const tb = document.getElementById('users-table-body'); tb.innerHTML = "";
+            if(data) {
+                data.forEach(u => {
+                    tb.innerHTML += `<tr><td>${u.username}</td><td>D:${u.deposit}<br>W:${u.winning}</td><td><button class="btn btn-sm btn-info" onclick="window.openBal('${u.id}')">Edit</button></td></tr>`;
+                });
+            }
+        };
+
+        window.loadWithdraw = async function() {
+            const { data } = await supabase.from('transactions').select('*').eq('type', 'Withdraw').eq('status', 'Pending');
+            const tb = document.getElementById('withdraw-table-body'); tb.innerHTML = "";
+            if(data) {
+                data.forEach(t => {
+                    tb.innerHTML += `<tr><td>${t.user_id.substring(0,5)}..</td><td>${t.amount}</td><td>${t.method}<br>${t.number}</td><td><button class="btn btn-sm btn-success" onclick="window.payW('${t.id}')">Pay</button></td></tr>`;
+                });
+            }
+        };
+
+        window.loadSettings = async function() {
+            const { data } = await supabase.from('app_settings').select('*').single();
+            if(data) {
+                document.getElementById('set-notice').value = data.notice || "";
+                document.getElementById('set-bkash').value = data.bkash_number || "";
+            }
+        };
+
+        // --- ACTIONS ---
+        window.openMatchModal = () => modals.match.show();
+        window.openCatModal = () => modals.cat.show();
+        window.openBal = (uid) => { document.getElementById('bal-uid').value = uid; modals.balance.show(); };
 
         window.saveMatch = async function() {
             const title = document.getElementById('m-title').value;
             const entry = document.getElementById('m-entry').value;
             const cat = document.getElementById('m-category').value;
+            if(!title) return alert("Enter Title");
             
-            if(!title) return alert("Title Missing");
-
-            const { error } = await supabase.from('matches').insert([{
-                title: title,
-                entry: entry,
-                category_id: cat,
+            await supabase.from('matches').insert([{
+                title: title, entry: entry, category_id: cat, 
                 status: document.getElementById('m-status').value,
-                match_id_number: Math.floor(1000 + Math.random() * 9000),
-                timestamp: Date.now()
+                total_prize: document.getElementById('m-prize').value,
+                match_id_number: Math.floor(Math.random()*9000)
             }]);
+            modals.match.hide(); window.loadMatches();
+        };
 
-            if(error) alert(error.message);
-            else { modals.match.hide(); window.fetchMatches(); }
-        }
-
-        window.deleteMatch = async function(id) {
-            if(confirm("Delete?")) {
-                await supabase.from('matches').delete().eq('id', id);
-                window.fetchMatches();
-            }
-        }
-
-        // --- CATEGORIES ---
-        window.fetchCategories = async function() {
-            const { data } = await supabase.from('categories').select('*');
-            const grid = document.getElementById('cat-grid'); grid.innerHTML = "";
-            if(data) {
-                data.forEach(c => {
-                    grid.innerHTML += `<div class="col-6"><div class="card-box text-center"><img src="${c.img}" style="height:80px;"><br><b>${c.name}</b><br><button class="btn btn-sm btn-danger mt-2" onclick="window.delCat('${c.id}')">Delete</button></div></div>`;
-                });
-            }
-        }
+        window.delMatch = async function(id) {
+            if(confirm("Delete?")) { await supabase.from('matches').delete().eq('id', id); window.loadMatches(); }
+        };
 
         window.saveCategory = async function() {
             const name = document.getElementById('cat-name').value;
-            const url = document.getElementById('cat-url').value;
-            if(!name || !url) return alert("Fill all fields");
-            
-            const { error } = await supabase.from('categories').insert([{name: name, img: url}]);
-            if(error) alert(error.message);
-            else { modals.cat.hide(); window.fetchCategories(); }
-        }
+            const img = document.getElementById('cat-img').value;
+            if(!name || !img) return alert("Enter Name & Image URL");
+            await supabase.from('categories').insert([{name: name, img: img}]);
+            modals.cat.hide(); window.loadCats();
+        };
 
         window.delCat = async function(id) {
-            if(confirm("Delete?")) { await supabase.from('categories').delete().eq('id', id); window.fetchCategories(); }
-        }
+            if(confirm("Delete?")) { await supabase.from('categories').delete().eq('id', id); window.loadCats(); }
+        };
+
+        window.updateBalance = async function() {
+            const uid = document.getElementById('bal-uid').value;
+            const amt = parseFloat(document.getElementById('bal-amount').value);
+            const action = document.getElementById('bal-action').value;
+            
+            const { data: u } = await supabase.from('users').select('*').eq('id', uid).single();
+            let update = {};
+            
+            if(action === 'add_dep') update = { deposit: (u.deposit||0) + amt };
+            if(action === 'add_win') update = { winning: (u.winning||0) + amt };
+            
+            await supabase.from('users').update(update).eq('id', uid);
+            modals.balance.hide(); window.loadUsers();
+        };
+
+        window.payW = async function(id) {
+            if(confirm("Mark Paid?")) {
+                await supabase.from('transactions').update({status: 'Success'}).eq('id', id);
+                window.loadWithdraw();
+            }
+        };
+
+        window.saveSettings = async function() {
+            await supabase.from('app_settings').update({
+                notice: document.getElementById('set-notice').value,
+                bkash_number: document.getElementById('set-bkash').value
+            }).eq('id', 1);
+            alert("Saved");
+        };
 
         // --- INIT ---
-        window.openMatchModal = () => { modals.match.show(); }
-        window.openCategoryModal = () => { modals.cat.show(); }
-
-        window.onload = function() {
+        document.addEventListener('DOMContentLoaded', () => {
             modals.match = new bootstrap.Modal(document.getElementById('matchModal'));
             modals.cat = new bootstrap.Modal(document.getElementById('catModal'));
+            modals.balance = new bootstrap.Modal(document.getElementById('balanceModal'));
             
-            // ATTEMPT FETCH
-            window.fetchDashboardData();
-
-            // FALLBACK: If loading takes more than 5 seconds, Force close it
-            setTimeout(() => {
-                document.getElementById('loading').classList.add('hidden');
-            }, 5000);
-        }
+            window.loadDash();
+        });
     </script>
 </body>
 </html>
