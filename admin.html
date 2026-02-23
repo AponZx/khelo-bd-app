@@ -131,7 +131,6 @@
             margin-bottom: 20px;
             transition: transform 0.2s;
         }
-        .stat-card:hover { transform: translateY(-3px); }
 
         .stat-icon {
             width: 56px; height: 56px;
@@ -153,11 +152,8 @@
         .table tbody td { padding: 12px; vertical-align: middle; }
         
         .form-control, .form-select { padding: 12px 16px; border-radius: 10px; border: 1px solid #d1d5db; font-size: 14px; }
-        .form-control:focus, .form-select:focus { box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1); border-color: var(--primary); }
-        
         .btn { padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; transition: all 0.2s; }
         .btn-primary { background: var(--primary); border: none; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3); }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
         /* --- MODAL TABS & PREVIEW --- */
         .modal-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
@@ -595,7 +591,6 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Date Time</label>
-                            <!-- Using standard text input for time string to match original logic easily -->
                             <input type="text" id="m-date" class="form-control" placeholder="e.g. Oct 25, 8:00 PM">
                         </div>
                          <div class="col-md-6">
@@ -687,14 +682,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript">
         
-        // ==========================================
-        // PASTE YOUR SUPABASE KEYS HERE 👇
-        // ==========================================
+        // Supabase Initialization
         const SUPABASE_URL = 'https://gjeykhdxzdfzqgvskwhv.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_awmrROuwvjBPES_ZIdMLkA_p_K0i-1Y';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // ImgBB API Key (Untouched, works perfectly)
+        // ImgBB API Key
         const IMGBB_API_KEY = "77f9b7d455f8249ce4ff0303d7956899";
 
         let allMatches = {}, allUsers = {}, allCategories = {};
@@ -729,7 +722,6 @@
                  document.querySelector('.nav-overlay').classList.remove('active');
             }
 
-            // Fetch fresh data when switching tabs
             if(view === 'dashboard') fetchDashboardData();
             if(view === 'matches') fetchMatches();
             if(view === 'categories') fetchCategories();
@@ -810,7 +802,6 @@
         }
 
         async function fetchDashboardData() {
-            // Get users
             const { data: users } = await supabase.from('users').select('*');
             const uCount = users ? users.length : 0;
             document.getElementById('dash-users').innerText = uCount;
@@ -819,11 +810,9 @@
             if(users) users.forEach(u => { tDep += parseFloat(u.deposit||0); tWin += parseFloat(u.winning||0); });
             document.getElementById('dash-deposit').innerText = tDep.toFixed(0);
 
-            // Get matches
             const { count: mCount } = await supabase.from('matches').select('*', { count: 'exact', head: true });
             document.getElementById('dash-matches').innerText = mCount || 0;
 
-            // Get pending transactions
             const { count: pendingCount } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'Withdraw').eq('status', 'Pending');
             document.getElementById('dash-pending').innerText = pendingCount || 0;
 
@@ -950,7 +939,6 @@
                 });
             }
 
-            // Populate category dropdown
             const { data: cData } = await supabase.from('categories').select('*');
             const sel = document.getElementById('m-category');
             sel.innerHTML = "";
@@ -989,7 +977,7 @@
                 title: document.getElementById('m-title').value,
                 entry: parseInt(document.getElementById('m-entry').value),
                 time: document.getElementById('m-date').value || "TBA",
-                timestamp: Date.now(), // Simplified for now
+                timestamp: Date.now(), 
                 category_id: document.getElementById('m-category').value,
                 map: document.getElementById('m-map').value,
                 total_prize: parseInt(document.getElementById('m-prize').value)||0,
@@ -1048,15 +1036,10 @@
         window.kickPlayer = async (partId, matchId) => {
             if (confirm("Are you sure you want to remove this player?")) {
                 await supabase.from('match_participants').delete().eq('id', partId);
-                
-                // Decrement Joined Count
                 const { data } = await supabase.from('matches').select('joined').eq('id', matchId).single();
-                if(data && data.joined > 0) {
-                    await supabase.from('matches').update({ joined: data.joined - 1 }).eq('id', matchId);
-                }
-                
-                viewParticipants(matchId); // refresh
-                fetchMatches(); // refresh match list
+                if(data && data.joined > 0) await supabase.from('matches').update({ joined: data.joined - 1 }).eq('id', matchId);
+                viewParticipants(matchId); 
+                fetchMatches(); 
             }
         }
 
